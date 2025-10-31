@@ -5,12 +5,14 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Create from '../pages/Create.vue'; // Corrected Path
 import View from '../pages/View.vue'; // Corrected Path
+import TextView from '../pages/TextView.vue'; // New Text View Page
 import Error404 from '../pages/Error404.vue'; // Corrected Path
 import ErrorGeneral from '../pages/ErrorGeneral.vue'; // Corrected Path
 
 const routes = [
   { path: '/', component: Create, name: 'create' },
   { path: '/view/:hash', component: View, name: 'view' },
+  { path: '/text/:hash', component: TextView, name: 'text' },
   { path: '/error', component: ErrorGeneral, name: 'error' },
   { path: '/:pathMatch(.*)*', component: Error404, name: 'not-found' }
 ];

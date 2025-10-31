@@ -53,6 +53,9 @@ const vuetify = createVuetify({
   icons: {
     defaultSet: 'mdi',
   },
+  locale: {
+    locale: 'en', // Will be updated dynamically
+  },
 })
 
 // Create and mount the Vue application

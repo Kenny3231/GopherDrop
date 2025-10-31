@@ -1,35 +1,46 @@
-// Package config provides application configuration loading from environment variables.
 package config
 
 import (
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Config holds all environment-based configuration.
 type Config struct {
-	DBHost      string
-	DBUser      string
-	DBPass      string
-	DBName      string
-	DBSSLMode   string
-	SecretKey   string
-	ListenAddr  string
-	StoragePath string
-	MaxFileSize int64
+	DBHost         string
+	DBUser         string
+	DBPass         string
+	DBName         string
+	DBSSLMode      string
+	SecretKey      string
+	ListenAddr     string
+	StoragePath    string
+	MaxFileSize    int64
+	ExpirationOpts []string
+	CustomCSS      string
+	LogoURL        string
+	BackgroundURL  string
+	FaviconURL     string
+	Language       string
 }
 
 // LoadConfig returns a Config object populated from environment variables.
 func LoadConfig() Config {
 	cfg := Config{
-		DBHost:      os.Getenv("DB_HOST"),
-		DBUser:      os.Getenv("DB_USER"),
-		DBPass:      os.Getenv("DB_PASSWORD"),
-		DBName:      os.Getenv("DB_NAME"),
-		DBSSLMode:   os.Getenv("DB_SSLMODE"),
-		SecretKey:   os.Getenv("SECRET_KEY"),
-		ListenAddr:  os.Getenv("LISTEN_ADDR"),
-		StoragePath: os.Getenv("STORAGE_PATH"),
+		DBHost:        os.Getenv("DB_HOST"),
+		DBUser:        os.Getenv("DB_USER"),
+		DBPass:        os.Getenv("DB_PASSWORD"),
+		DBName:        os.Getenv("DB_NAME"),
+		DBSSLMode:     os.Getenv("DB_SSLMODE"),
+		SecretKey:     os.Getenv("SECRET_KEY"),
+		ListenAddr:    os.Getenv("LISTEN_ADDR"),
+		StoragePath:   os.Getenv("STORAGE_PATH"),
+		CustomCSS:     os.Getenv("CUSTOM_CSS"),
+		LogoURL:       os.Getenv("LOGO_URL"),
+		BackgroundURL: os.Getenv("BACKGROUND_URL"),
+		FaviconURL:    os.Getenv("FAVICON_URL"),
+		Language:      os.Getenv("LANGUAGE"),
 	}
 
 	if cfg.ListenAddr == "" {
@@ -37,6 +48,9 @@ func LoadConfig() Config {
 	}
 	if cfg.StoragePath == "" {
 		cfg.StoragePath = "/tmp"
+	}
+	if cfg.Language == "" {
+		cfg.Language = "en"
 	}
 
 	maxFileSizeStr := os.Getenv("MAX_FILE_SIZE")
@@ -49,6 +63,17 @@ func LoadConfig() Config {
 			cfg.MaxFileSize = 10 * 1024 * 1024
 		} else {
 			cfg.MaxFileSize = size
+		}
+	}
+
+	// Parse expiration options
+	expOptsStr := os.Getenv("EXPIRATION_OPTIONS")
+	if expOptsStr == "" {
+		cfg.ExpirationOpts = []string{"1h", "6h", "12h", "24h", "72h", "168h"}
+	} else {
+		cfg.ExpirationOpts = strings.Split(expOptsStr, ",")
+		for i, opt := range cfg.ExpirationOpts {
+			cfg.ExpirationOpts[i] = strings.TrimSpace(opt)
 		}
 	}
 

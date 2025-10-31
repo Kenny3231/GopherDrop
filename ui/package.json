@@ -8,6 +8,7 @@
     },
     "dependencies": {
         "@mdi/font": "^7.4.47",
+        "jszip": "^3.10.1",
         "vite-plugin-vuetify": "^1.0.1",
         "vue": "^3.3.4",
         "vue-router": "^4.2.5",

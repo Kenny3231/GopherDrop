@@ -35,6 +35,12 @@ services:
       LISTEN_ADDR: :8080
       STORAGE_PATH: /app/storage
       MAX_FILE_SIZE: 10485760
+      EXPIRATION_OPTIONS: 1h,6h,12h,24h,72h,168h
+      CUSTOM_CSS: ""
+      LOGO_URL: ""
+      BACKGROUND_URL: ""
+      FAVICON_URL: ""
+      LANGUAGE: en
     depends_on:
       db:
         condition: service_healthy

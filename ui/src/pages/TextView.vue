@@ -1,7 +1,7 @@
 <template>
   <v-container class="d-flex justify-center align-center fill-height">
-    <v-card class="pa-4 pa-md-8 animate__animated animate__fadeIn" max-width="600" elevation="6" rounded="lg">
-      <v-card-title class="text-h5 text-md-h4 font-weight-bold text-center mb-4">{{ getTranslation('viewSecret') }}</v-card-title>
+    <v-card class="pa-4 pa-md-8 animate__animated animate__fadeIn" max-width="800" elevation="6" rounded="lg">
+      <v-card-title class="text-h5 text-md-h4 font-weight-bold text-center mb-4">{{ getTranslation('secretText') }} 🔒</v-card-title>
       <v-card-text>
         <v-alert v-if="errorMessage" type="error" class="mb-4" variant="tonal">
           {{ errorMessage }}
@@ -29,8 +29,8 @@
         <SecretDisplay
           v-if="secretLoaded"
           :text-content="secretContent"
-          :file="fileBlob"
-          :filename="filename"
+          :file="null"
+          :filename="''"
         />
       </v-card-text>
     </v-card>
@@ -40,7 +40,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { getSend, checkPasswordProtection } from '../services/api.js';
+import { getTextSend, checkPasswordProtection } from '../services/api.js';
 import SecretDisplay from '../components/SecretDisplay.vue';
 
 const route = useRoute();
@@ -51,8 +51,6 @@ const errorMessage = ref('');
 const notFound = ref(false);
 const requiresPassword = ref(false);
 const secretContent = ref('');
-const fileBlob = ref(null);
-const filename = ref('');
 const secretLoaded = ref(false);
 
 const currentLanguage = computed(() => {
@@ -61,21 +59,21 @@ const currentLanguage = computed(() => {
 
 const translations = {
   fr: {
-    viewSecret: 'Voir le secret 🔒',
+    secretText: 'Texte du secret',
     password: 'Mot de passe',
     secretNotFound: 'Secret introuvable ou expiré.',
     loadSecret: 'Charger le secret',
     loadSecretError: 'Échec du chargement du secret. Mot de passe incorrect ou secret expiré.'
   },
   en: {
-    viewSecret: 'View Secret 🔒',
+    secretText: 'Secret Text',
     password: 'Password',
     secretNotFound: 'Secret not found or has expired.',
     loadSecret: 'Load Secret',
     loadSecretError: 'Failed to load secret. Incorrect password or secret has expired.'
   },
   es: {
-    viewSecret: 'Ver secreto 🔒',
+    secretText: 'Texto del secreto',
     password: 'Contraseña',
     secretNotFound: 'Secreto no encontrado o ha expirado.',
     loadSecret: 'Cargar secreto',
@@ -90,19 +88,20 @@ const getTranslation = (key) => {
 async function loadSecret() {
   errorMessage.value = '';
   try {
-    const result = await getSend(hash, password.value);
+    const result = await getTextSend(hash, password.value);
     if (result.notFound) {
       notFound.value = true;
       return;
     }
 
-    if (result.file) {
-      fileBlob.value = result.file;
-      filename.value = result.filename;
-    } else {
+    if (result.text) {
       secretContent.value = result.text;
+      secretLoaded.value = true;
+    } else {
+      // If it's not text, redirect to file view
+      window.location.href = `/view/${hash}${password.value ? `?password=${encodeURIComponent(password.value)}` : ''}`;
+      return;
     }
-    secretLoaded.value = true;
   } catch (err) {
     errorMessage.value = err.message || getTranslation('loadSecretError');
   }

@@ -1,7 +1,5 @@
 # 🛠️ **GopherDrop** – Secure One-Time Secret Sharing 🏁
 
-![Docker Image Version](https://img.shields.io/docker/v/petrakisg/gopherdrop?sort=semver&label=Docker%20Image%20Version&logo=docker)
-![Docker Pulls](https://img.shields.io/docker/pulls/petrakisg/gopherdrop)
 ![GitHub branch check runs](https://img.shields.io/github/check-runs/kek-Sec/GopherDrop/main)
 ![Coveralls](https://img.shields.io/coverallsCoverage/github/kek-Sec/GopherDrop)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/kek-Sec/GopherDrop)
@@ -33,9 +31,15 @@ GopherDrop is a secure, self-hostable REST API and UI for sharing encrypted one-
 ## 🌟 **Features**
 
 - **Send Text or Files**: Share sensitive information securely.
+- **Text Display in Page**: View text secrets directly in the browser with syntax highlighting support.
+- **Multi-File Support**: Automatically packages multiple files/folders into a ZIP archive.
 - **Password Protection**: Encrypt your secrets with a password.
+- **Interactive Password Form**: User-friendly password input with validation.
 - **One-Time Retrieval**: Automatically delete secrets after a single access.
-- **Expiration Settings**: Define how long a secret remains available.
+- **Expiration Settings**: Define how long a secret remains available with customizable options.
+- **Multi-Language Support**: Available in French 🇫🇷, English 🇺🇸, and Spanish 🇪🇸.
+- **Dark/Light Theme**: Toggle between dark and light modes with preference persistence.
+- **Customizable Branding**: Configure custom logo, background, favicon, and CSS.
 - **Responsive UI**: Built with Vue.js and Vuetify for a modern user experience.
 - **Dockerized Deployment**: Simple setup with Docker and Docker Compose.
 - **Production and Debug Modes**: Easily switch between production and debug builds.
@@ -45,9 +49,13 @@ GopherDrop is a secure, self-hostable REST API and UI for sharing encrypted one-
 
 ## 🐳 **Docker Deployment**
 
-### **Production `docker-compose.yml`**
+Use the provided `docker-compose.yaml` to deploy:
 
-> docker-compose.prod.sample.yaml
+```bash
+docker-compose up -d
+```
+
+For production deployment, see `docker-compose.prod.sample.yaml`.
 
 ---
 
@@ -118,16 +126,23 @@ MAX_FILE_SIZE=10485760
 
 ### **Environment Variables**
 
-| Variable         | Description                     | Default Value                        |
-|------------------|---------------------------------|--------------------------------------|
-| `DB_HOST`        | Database host                   | `db`                                |
-| `DB_USER`        | Database username               | `user`                              |
-| `DB_PASSWORD`    | Database password               | `pass`                              |
-| `DB_NAME`        | Database name                   | `gopherdropdb`                      |
-| `SECRET_KEY`     | Secret key for encryption       | `supersecretkeysupersecretkey32`    |
-| `LISTEN_ADDR`    | API listen address              | `:8080`                             |
-| `STORAGE_PATH`   | Path for storing uploaded files | `/app/storage`                      |
-| `MAX_FILE_SIZE`  | Maximum file size in bytes      | `10485760` (10 MB)                  |
+| Variable              | Description                                | Default Value                        |
+|-----------------------|--------------------------------------------|--------------------------------------|
+| `DB_HOST`             | Database host                              | `db`                                |
+| `DB_USER`             | Database username                          | `user`                              |
+| `DB_PASSWORD`         | Database password                          | `pass`                              |
+| `DB_NAME`             | Database name                              | `gopherdropdb`                      |
+| `DB_SSLMODE`          | Database SSL mode                          | `disable`                           |
+| `SECRET_KEY`          | Secret key for encryption (32 chars min)   | `supersecretkeysupersecretkey32`    |
+| `LISTEN_ADDR`         | API listen address                         | `:8080`                             |
+| `STORAGE_PATH`        | Path for storing uploaded files            | `/app/storage`                      |
+| `MAX_FILE_SIZE`       | Maximum file size in bytes                 | `10485760` (10 MB)                  |
+| `EXPIRATION_OPTIONS`  | Comma-separated expiration durations       | `1h,6h,12h,24h,72h,168h`            |
+| `CUSTOM_CSS`          | Custom CSS to inject into the frontend     | `""`                                |
+| `LOGO_URL`            | URL for custom logo (empty = default)      | `""` (uses `/assets/Images/logo.png`) |
+| `BACKGROUND_URL`      | URL for custom background image            | `""`                                |
+| `FAVICON_URL`         | URL for custom favicon                     | `""`                                |
+| `LANGUAGE`            | Default language (fr, en, es)              | `en`                                |
 
 ### **Build Arguments**
 
@@ -146,11 +161,23 @@ MAX_FILE_SIZE=10485760
 
 ### **API Endpoints**
 
-| Method | Endpoint           | Description                              |
-|--------|--------------------|------------------------------------------|
-| `POST` | `/send`            | Create a new send (text or file)         |
-| `GET`  | `/send/:id`        | Retrieve a send by its hash              |
-| `GET`  | `/send/:id/check`  | Check if a send requires a password      |
+| Method | Endpoint           | Description                                      |
+|--------|--------------------|--------------------------------------------------|
+| `POST` | `/send`            | Create a new send (text or file)                 |
+| `GET`  | `/send/:id`        | Retrieve a send by its hash (file download)      |
+| `GET`  | `/text/:id`        | Retrieve text content by its hash                |
+| `GET`  | `/view/:id`        | Retrieve a send (redirects for text)             |
+| `GET`  | `/send/:id/check`  | Check if a send requires a password              |
+| `GET`  | `/config`          | Get frontend configuration                       |
+
+### **Frontend Routes**
+
+| Route          | Description                                           |
+|----------------|-------------------------------------------------------|
+| `/`            | Home page - Create new secret                         |
+| `/view/:hash`  | View/download a file secret (with password form)      |
+| `/text/:hash`  | Display a text secret (with password form)            |
+| `/error`       | Generic error page                                    |
 
 
 ---
@@ -167,6 +194,38 @@ MAX_FILE_SIZE=10485760
 ## 📝 **License**
 
 GopherDrop is licensed under the [MIT License](LICENSE).
+
+---
+
+## 🎨 **Customization Examples**
+
+### **Custom Branding**
+
+```yaml
+environment:
+  LOGO_URL: "https://example.com/my-logo.png"
+  BACKGROUND_URL: "https://example.com/background.jpg"
+  FAVICON_URL: "https://example.com/favicon.ico"
+  CUSTOM_CSS: |
+    .v-app-bar { background: linear-gradient(45deg, #667eea 0%, #764ba2 100%) !important; }
+    .v-btn { border-radius: 20px !important; }
+```
+
+### **Custom Expiration Options**
+
+```yaml
+environment:
+  EXPIRATION_OPTIONS: "30m,2h,8h,1d,3d,7d,30d"
+```
+
+### **Language Settings**
+
+Set the default language (users can still switch):
+
+```yaml
+environment:
+  LANGUAGE: "fr"  # Options: fr, en, es
+```
 
 ---
 

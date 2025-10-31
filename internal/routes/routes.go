@@ -44,6 +44,9 @@ func SetupRouter(cfg config.Config, db *gorm.DB) *gin.Engine {
 	// Other routes without rate limiting
 	r.GET("/send/:id", handlers.GetSend(cfg, db))
 	r.GET("/send/:id/check", handlers.CheckPasswordProtection(db))
+	r.GET("/text/:id", handlers.GetTextSend(cfg, db))
+	r.GET("/view/:id", handlers.GetSend(cfg, db))
+	r.GET("/config", handlers.GetConfig(cfg))
 
 	return r
 }

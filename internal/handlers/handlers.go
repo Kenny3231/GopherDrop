@@ -1,4 +1,3 @@
-// Package handlers contains logic for creating and retrieving sends.
 package handlers
 
 import (
@@ -8,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -125,6 +125,40 @@ func CreateSend(cfg config.Config, db *gorm.DB) gin.HandlerFunc {
 				return
 			}
 
+			// Check if it's a directory (multiple files/folders)
+			if isZipFile(header.Filename) || isDirectory(data) {
+				// Handle as ZIP archive
+				enc, err := security.EncryptData(data, key)
+				if err != nil {
+					log.Println("Error encrypting ZIP data:", err)
+					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to encrypt ZIP data"})
+					return
+				}
+
+				fp := filepath.Join(cfg.StoragePath, hash)
+				if err := os.WriteFile(fp, []byte(enc), 0600); err != nil {
+					log.Println("Error writing encrypted ZIP to storage:", err)
+					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to write encrypted ZIP to storage"})
+					return
+				}
+
+				log.Println("ZIP saved successfully to:", fp)
+
+				s := models.Send{
+					Hash:      hash,
+					Type:      "file",
+					FilePath:  fp,
+					FileName:  header.Filename,
+					Password:  pw,
+					OneTime:   oneTime,
+					ExpiresAt: expiresAt,
+				}
+				db.Create(&s)
+				log.Println("ZIP send created successfully with hash:", hash)
+				c.JSON(http.StatusOK, gin.H{"hash": s.Hash})
+				return
+			}
+
 			enc, err := security.EncryptData(data, key)
 			if err != nil {
 				log.Println("Error encrypting file data:", err)
@@ -214,6 +248,17 @@ func GetSend(cfg config.Config, db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+func isZipFile(filename string) bool {
+	return strings.HasSuffix(strings.ToLower(filename), ".zip")
+}
+
+func isDirectory(data []byte) bool {
+	// Simple check for ZIP file signature (PK\x03\x04)
+	if len(data) >= 4 && data[0] == 0x50 && data[1] == 0x4B && data[2] == 0x03 && data[3] == 0x04 {
+		return true
+	}
+	return false
+}
 func deriveKey(pw string, cfg config.Config) []byte {
 	if pw != "" {
 		return []byte(security.PadKey(pw))
@@ -247,5 +292,67 @@ func CheckPasswordProtection(db *gorm.DB) gin.HandlerFunc {
 
 		// Return whether the send requires a password
 		c.JSON(http.StatusOK, gin.H{"requiresPassword": s.Password != ""})
+	}
+}
+
+// GetTextSend handles retrieving and displaying text sends by their hash.
+func GetTextSend(cfg config.Config, db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		hash := c.Param("id")
+		var s models.Send
+
+		if db.First(&s, "hash = ?", hash).RecordNotFound() {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+
+		if time.Now().After(s.ExpiresAt) {
+			deleteSendAndFile(db, &s)
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+
+		pw := c.Query("password")
+		if s.Password != "" && s.Password != pw {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+
+		key := deriveKey(pw, cfg)
+
+		if s.Type == "text" {
+			d, err := security.DecryptData(s.Data, key)
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+			c.String(http.StatusOK, string(d))
+		} else {
+			// If it's not text, redirect to file view
+			pwParam := ""
+			if pw != "" {
+				pwParam = fmt.Sprintf("?password=%s", pw)
+			}
+			c.Redirect(http.StatusFound, fmt.Sprintf("/view/%s%s", hash, pwParam))
+			return
+		}
+
+		if s.OneTime {
+			deleteSendAndFile(db, &s)
+		}
+	}
+}
+
+// GetConfig returns configuration data for the frontend
+func GetConfig(cfg config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"expirationOptions": cfg.ExpirationOpts,
+			"customCSS":         cfg.CustomCSS,
+			"logoURL":           cfg.LogoURL,
+			"backgroundURL":     cfg.BackgroundURL,
+			"faviconURL":        cfg.FaviconURL,
+			"language":          cfg.Language,
+		})
 	}
 }
