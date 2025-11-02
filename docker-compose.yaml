@@ -40,7 +40,8 @@ services:
       LOGO_URL: ""
       BACKGROUND_URL: ""
       FAVICON_URL: ""
-      LANGUAGE: en
+    volumes:
+      - ./personal:/app/personal:ro
     depends_on:
       db:
         condition: service_healthy

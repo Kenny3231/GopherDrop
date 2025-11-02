@@ -1,190 +1,246 @@
-# 🛠️ **GopherDrop - Modifications pour Entreprise**
+# 🔧 **Gopher Drop Enhanced - Custom Modifications**
 
-## 📋 **Résumé des modifications réalisées**
+## 📌 **Project Information**
 
-Ce document détaille les personnalisations apportées à GopherDrop pour l'adapter aux besoins d'une entreprise, incluant le branding personnalisé, la configuration flexible et le support des dossiers multiples.
-
-### **Date des modifications** : 2025-10-30
-### **Auteur** : Kilo Code (Assistant IA)
-
----
-
-## 🔧 **Modifications par fichier**
-
-### **1. Backend Go - Configuration**
-**Fichier** : `internal/config/config.go`
-- ✅ Ajout des nouvelles variables d'environnement :
-  - `EXPIRATION_OPTIONS` : Options d'expiration configurables
-  - `CUSTOM_CSS` : CSS personnalisé
-  - `LOGO_URL` : URL du logo
-  - `BACKGROUND_URL` : URL du fond d'écran
-  - `FAVICON_URL` : URL de l'icône favicon
-  - `LANGUAGE` : Langue de l'interface
-- ✅ Fonction de parsing pour les options d'expiration
-
-### **2. Backend Go - Handlers API**
-**Fichier** : `internal/handlers/handlers.go`
-- ✅ Nouvelle fonction `GetConfig()` pour exposer la configuration
-- ✅ Support des archives ZIP pour dossiers multiples
-- ✅ Fonctions utilitaires `isZipFile()` et `isDirectory()`
-
-### **3. Backend Go - Routes**
-**Fichier** : `internal/routes/routes.go`
-- ✅ Ajout de la route `GET /api/config`
-
-### **4. Frontend Vue.js - App principale**
-**Fichier** : `ui/src/App.vue`
-- ✅ Chargement dynamique de la configuration
-- ✅ Application du CSS personnalisé
-- ✅ Logo configurable
-- ✅ Fond d'écran configurable
-- ✅ Icône favicon configurable
-
-### **5. Frontend Vue.js - Configuration principale**
-**Fichier** : `ui/src/main.js`
-- ✅ Préparation pour l'internationalisation
-
-### **6. Frontend Vue.js - Services API**
-**Fichier** : `ui/src/services/api.js`
-- ✅ Fonction `getConfig()` pour récupérer la configuration
-
-### **7. Frontend Vue.js - Page de création**
-**Fichier** : `ui/src/pages/Create.vue`
-- ✅ Chargement des options d'expiration depuis la config
-- ✅ Support upload ZIP avec indication utilisateur
-- ✅ Formatage automatique des durées
-
-### **8. Configuration Docker**
-**Fichier** : `docker-compose.yaml`
-- ✅ Ajout de toutes les nouvelles variables d'environnement
+- **Original Project**: [kek-Sec/GopherDrop](https://github.com/kek-Sec/GopherDrop)
+- **Fork Maintainer**: Kenny31
+- **Last Updated**: 2025-11-02
+- **Version**: Enhanced v2.0
 
 ---
 
-## ⚙️ **Variables d'environnement disponibles**
+## 🎯 **Purpose**
 
-```env
-# Options d'expiration personnalisables (format: durée1,durée2,durée3)
-EXPIRATION_OPTIONS=1h,6h,12h,24h,72h,168h
-
-# CSS personnalisé (injecté dans <head>)
-CUSTOM_CSS=.mon-style { color: #007bff; font-weight: bold; }
-
-# URLs pour le branding d'entreprise
-LOGO_URL=https://mon-entreprise.com/assets/logo.png
-BACKGROUND_URL=https://mon-entreprise.com/assets/background.jpg
-FAVICON_URL=https://mon-entreprise.com/assets/favicon.ico
-
-# Configuration de langue (support actuel: "en")
-LANGUAGE=en
-```
+This fork extends the original GopherDrop project with enterprise-ready customization features, focusing on branding flexibility and runtime configuration without requiring container rebuilds.
 
 ---
 
-## 🚀 **Guide de déploiement**
+## ⭐ **Key Enhancements by Kenny31**
 
-### **Prérequis**
-- Docker Desktop installé et fonctionnel
-- Ports 8081 et 8080 disponibles
+### **1. Personal Assets Directory System**
 
-### **Commandes de lancement**
+**Problem Solved**: Original project required rebuilding Docker images to change logos, favicons, or backgrounds.
+
+**Solution Implemented**:
+- Created `/personal` directory mounting system
+- Modified Nginx configuration to serve local assets
+- Updated Dockerfile to create `/app/personal` directory
+- Added volume binding in docker-compose.yaml
+
+**Files Modified**:
+- `Dockerfile` (line 65): Added `RUN mkdir -p /app/personal`
+- `nginx.conf` (lines 18-22): Added `/personal/` location block
+- `docker-compose.yaml` (line 44): Added volume mount `./personal:/app/personal:ro`
+
+**Benefits**:
+- ✅ No rebuild required to change branding
+- ✅ Simply drop files in `./personal/` directory
+- ✅ Hot-reload with `docker-compose restart app`
+- ✅ Read-only mount for security
+
+---
+
+### **2. Fixed Expiration Options Configuration**
+
+**Problem Solved**: Original implementation didn't properly load custom expiration options from environment variables.
+
+**Solution Implemented**:
+- Fixed `formatExpirationTitle()` function to use translations
+- Added `configExpirationValues` to preserve server-provided options
+- Removed conflicting `immediate: true` in language watch
+- Added proper translation mapping for all durations
+
+**Files Modified**:
+- `ui/src/pages/Create.vue` (lines 235-350): Complete refactor of expiration options handling
+
+**Benefits**:
+- ✅ Custom expiration durations work correctly
+- ✅ Proper translations in all languages (FR, EN, ES)
+- ✅ Dynamic loading from `/api/config`
+- ✅ Language switching preserves custom options
+
+---
+
+### **3. Environment Variables Runtime Loading**
+
+**Problem Solved**: Configuration was hardcoded or required build-time arguments.
+
+**Solution Implemented**:
+- All branding now loads from runtime environment variables
+- Backend exposes `/api/config` endpoint
+- Frontend dynamically fetches and applies configuration
+- Custom CSS injection without rebuild
+
+**Files Modified**:
+- `internal/config/config.go`: Extended to support all customization variables
+- `internal/handlers/handlers.go`: Added `GetConfig()` handler
+- `ui/src/App.vue`: Dynamic config loading and application
+
+**Benefits**:
+- ✅ Change configuration without rebuilding
+- ✅ Easy deployment across multiple environments
+- ✅ Centralized configuration management
+
+---
+
+### **4. Enhanced Multi-Language Support**
+
+**Improvement**: While original had English support, enhanced version provides:
+- Proper French translations
+- Spanish translations
+- Dynamic language switching
+- Browser language auto-detection
+- Persistent language preference
+
+**Files Modified**:
+- `ui/src/App.vue`: Language detection and persistence
+- `ui/src/pages/Create.vue`: Complete translation system with proper duration formatting
+
+---
+
+## 📋 **Complete List of Modifications**
+
+### **Backend (Go)**
+
+| File | Modification | Purpose |
+|------|--------------|---------|
+| `internal/config/config.go` | Added `EXPIRATION_OPTIONS`, `CUSTOM_CSS`, `LOGO_URL`, `BACKGROUND_URL`, `FAVICON_URL` | Runtime customization |
+| `internal/handlers/handlers.go` | Added `/api/config` endpoint | Expose configuration to frontend |
+| `nginx.conf` | Added `/personal/` location | Serve local assets |
+
+### **Frontend (Vue.js)**
+
+| File | Modification | Purpose |
+|------|--------------|---------|
+| `ui/src/App.vue` | Dynamic config loading, CSS injection, asset URLs | Apply customization |
+| `ui/src/pages/Create.vue` | Fixed expiration options, improved translations | Proper duration selection |
+| `ui/src/services/api.js` | Added `getConfig()` function | Fetch backend configuration |
+
+### **Infrastructure**
+
+| File | Modification | Purpose |
+|------|--------------|---------|
+| `Dockerfile` | Added `/app/personal` directory creation | Support personal assets |
+| `docker-compose.yaml` | Added volume mount, environment variables | Enable customization |
+
+---
+
+## 🔒 **Security Considerations**
+
+All modifications maintain the original security standards:
+
+- ✅ Assets served with proper caching headers
+- ✅ Personal directory mounted read-only (`:ro`)
+- ✅ No additional attack surface exposed
+- ✅ All original encryption/hashing preserved
+- ✅ Input validation maintained
+
+---
+
+## 📚 **Usage Guide**
+
+### **Quick Customization Steps**
+
+1. **Create personal directory:**
 ```bash
-# Construction et lancement
-docker-compose up --build
-
-# Lancement en arrière-plan
-docker-compose up -d --build
-
-# Arrêt des services
-docker-compose down
+mkdir -p personal
 ```
 
-### **Accès à l'application**
-- **Interface utilisateur** : http://localhost:8081
-- **API** : http://localhost:8081/api
+2. **Add your files:**
+```bash
+cp my-logo.png personal/logo.png
+cp my-background.jpg personal/background.jpg
+cp my-favicon.ico personal/favicon.ico
+```
 
----
-
-## 🔒 **Sécurité et compatibilité**
-
-### **Sécurité maintenue**
-- ✅ Chiffrement AES-256 des données
-- ✅ Validation des tailles de fichiers
-- ✅ Expiration automatique des secrets
-- ✅ Protection par mot de passe
-- ✅ Suppression après accès unique
-- ✅ Rate limiting sur les uploads
-
-### **Rétrocompatibilité**
-- ✅ Toutes les fonctionnalités existantes préservées
-- ✅ API backward compatible
-- ✅ Configuration par défaut conservée
-
----
-
-## 📁 **Support des dossiers multiples**
-
-### **Fonctionnement**
-- Upload de fichiers ZIP contenant plusieurs dossiers/fichiers
-- Détection automatique des archives ZIP
-- Téléchargement sécurisé et chiffré maintenu
-- Interface utilisateur mise à jour avec indications claires
-
-### **Utilisation**
-1. Créer une archive ZIP avec vos dossiers/fichiers
-2. Uploader via l'interface (champ "Select File or ZIP Archive")
-3. Partager le lien généré
-4. Le destinataire reçoit l'archive complète
-
----
-
-## 🎨 **Personnalisation du branding**
-
-### **Exemple de configuration entreprise**
+3. **Update docker-compose.yaml:**
 ```yaml
 environment:
-  LOGO_URL: "https://mon-entreprise.com/logo.png"
-  BACKGROUND_URL: "https://mon-entreprise.com/bg-corporate.jpg"
-  FAVICON_URL: "https://mon-entreprise.com/favicon.ico"
-  CUSTOM_CSS: |
-    .v-app-bar { background-color: #1a365d !important; }
-    .v-btn.primary { background-color: #2b77e6 !important; }
-    body { font-family: 'Segoe UI', sans-serif; }
-  EXPIRATION_OPTIONS: "1h,4h,8h,24h,48h,168h"
-  LANGUAGE: "en"
+  LOGO_URL: "/personal/logo.png"
+  BACKGROUND_URL: "/personal/background.jpg"
+  FAVICON_URL: "/personal/favicon.ico"
+  EXPIRATION_OPTIONS: "1h,6h,24h,72h,168h"
+```
+
+4. **Apply changes:**
+```bash
+docker-compose down
+docker-compose up -d
 ```
 
 ---
 
-## 🧪 **Tests recommandés**
+## 🧪 **Testing Checklist**
 
-### **Fonctionnalités de base**
-- [ ] Upload de texte avec mot de passe
-- [ ] Upload de fichier unique
-- [ ] Upload d'archive ZIP
-- [ ] Téléchargement avec mot de passe
-- [ ] Expiration automatique
-
-### **Personnalisation**
-- [ ] Logo affiché correctement
-- [ ] Fond d'écran appliqué
-- [ ] Icône favicon changée
-- [ ] CSS personnalisé fonctionnel
-- [ ] Options d'expiration personnalisées
-
-### **Sécurité**
-- [ ] Chiffrement des données
-- [ ] Validation des tailles
-- [ ] Rate limiting
-- [ ] Suppression après accès unique
+- [x] Personal assets accessible via `/personal/` path
+- [x] Logo changes without rebuild
+- [x] Favicon updates correctly
+- [x] Background image applies
+- [x] Custom expiration options load from API
+- [x] Translations work in FR, EN, ES
+- [x] Language switching preserves custom options
+- [x] Custom CSS injection functional
+- [x] All original features preserved
+- [x] No security regressions
 
 ---
 
-## 📞 **Support et maintenance**
+## 🚀 **Future Enhancements**
 
-Pour toute question concernant ces modifications :
-- Référencer ce document `CUSTOMIZATIONS.md`
-- Vérifier les logs Docker en cas de problème
-- Tester les variables d'environnement une par une
+Potential improvements for future versions:
 
-**Dernière mise à jour** : 2025-10-30
-**Version** : Enterprise Customization v1.0
+- [ ] Support for custom.css file in `/personal/` directory
+- [ ] Theme color customization via environment variables
+- [ ] Custom footer text/links
+- [ ] Webhook notifications on secret access
+- [ ] LDAP/SSO authentication
+- [ ] Advanced file type restrictions
+
+---
+
+## 📞 **Maintenance Notes**
+
+### **Updating from Upstream**
+
+To merge updates from the original kek-Sec/GopherDrop:
+
+```bash
+# Add original repo as upstream
+git remote add upstream https://github.com/kek-Sec/GopherDrop.git
+
+# Fetch upstream changes
+git fetch upstream
+
+# Merge while preserving enhancements
+git merge upstream/main
+
+# Resolve conflicts (focus on preserving new features)
+# Test thoroughly before deploying
+```
+
+### **Version Tracking**
+
+- **Original GopherDrop**: Based on latest main branch
+- **Enhanced Fork**: v2.0 (2025-11-02)
+- **Key Additions**: Personal assets directory, dynamic configuration, fixed expiration options
+
+---
+
+## 📖 **Documentation**
+
+- **Original Project**: https://github.com/kek-Sec/GopherDrop
+- **This Fork**: See [README.md](README.md) for usage guide
+- **CSS Guide**: See [CSS_CUSTOMIZATION.md](CSS_CUSTOMIZATION.md)
+- **API Documentation**: See [README.md#api-endpoints](README.md#api-endpoints)
+
+---
+
+## 🏆 **Credits**
+
+- **Original Development**: kek-Sec team
+- **Enhanced Fork**: Kenny31
+- **Contributions**: Community feedback and testing
+
+---
+
+**Thank you for using GopherDrop Enhanced!** 🚀

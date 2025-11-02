@@ -142,10 +142,10 @@ const currentLanguage = computed(() => {
 
 const translations = {
   fr: {
-    createNewSecret: 'Créer un nouveau secret 🔑',
+    createNewSecret: 'Créer un nouveau secret',
     text: 'Texte',
     files: 'Fichiers',
-    textSecret: 'Secret texte',
+    textSecret: 'Texte secret',
     selectFiles: 'Sélectionner des fichiers',
     filesHint: 'Sélectionnez plusieurs fichiers qui seront automatiquement compressés en ZIP',
     filesSelected: 'fichier(s) sélectionné(s)',
@@ -162,6 +162,7 @@ const translations = {
     zipCreationError: 'Erreur lors de la création du fichier ZIP',
     createSecretError: 'Échec de la création du secret',
     '1hour': '1 heure',
+    '3hours': '3 heures',
     '6hours': '6 heures',
     '12hours': '12 heures',
     '24hours': '24 heures',
@@ -169,7 +170,7 @@ const translations = {
     '1week': '1 semaine'
   },
   en: {
-    createNewSecret: 'Create a New Secret 🔑',
+    createNewSecret: 'Create a New Secret',
     text: 'Text',
     files: 'Files',
     textSecret: 'Text Secret',
@@ -189,6 +190,7 @@ const translations = {
     zipCreationError: 'Error creating ZIP file',
     createSecretError: 'Failed to create secret',
     '1hour': '1 hour',
+    '3hours': '3 hours',
     '6hours': '6 hours',
     '12hours': '12 hours',
     '24hours': '24 hours',
@@ -196,7 +198,7 @@ const translations = {
     '1week': '1 week'
   },
   es: {
-    createNewSecret: 'Crear un nuevo secreto 🔑',
+    createNewSecret: 'Crear un nuevo secreto',
     text: 'Texto',
     files: 'Archivos',
     textSecret: 'Secreto de texto',
@@ -216,6 +218,7 @@ const translations = {
     zipCreationError: 'Error al crear archivo ZIP',
     createSecretError: 'Error al crear secreto',
     '1hour': '1 hora',
+    '3hours': '3 horas',
     '6hours': '6 horas',
     '12hours': '12 horas',
     '24hours': '24 horas',
@@ -229,17 +232,28 @@ const getTranslation = (key) => {
 };
 
 const expirationOptions = ref([]);
+const configExpirationValues = ref(null);
 
 // Update expiration options when language changes
 const updateExpirationOptions = () => {
-  expirationOptions.value = [
+  // Si on a des valeurs de la config, on les utilise
+  if (configExpirationValues.value && configExpirationValues.value.length > 0) {
+    expirationOptions.value = configExpirationValues.value.map(opt => ({
+      title: formatExpirationTitle(opt),
+      value: opt
+    }));
+  } else {
+    // Sinon, on utilise les valeurs par défaut
+    expirationOptions.value = [
     { title: getTranslation('1hour'), value: '1h' },
+    { title: getTranslation('3hours'), value: '3h' },
     { title: getTranslation('6hours'), value: '6h' },
     { title: getTranslation('12hours'), value: '12h' },
     { title: getTranslation('24hours'), value: '24h' },
     { title: getTranslation('3days'), value: '72h' },
     { title: getTranslation('1week'), value: '168h' }
-  ];
+    ];
+  }
 };
 
 // Initialize expiration options
@@ -285,11 +299,15 @@ onMounted(async () => {
   try {
     const config = await getConfig();
     if (config.expirationOptions && config.expirationOptions.length > 0) {
+      // Stocker les valeurs de la config
+      configExpirationValues.value = config.expirationOptions;
+      // Appliquer avec les traductions
       expirationOptions.value = config.expirationOptions.map(opt => ({
         title: formatExpirationTitle(opt),
         value: opt
       }));
     } else {
+      // Pas de config, utiliser les valeurs par défaut
       updateExpirationOptions();
     }
   } catch (error) {
@@ -300,10 +318,27 @@ onMounted(async () => {
   // Update expiration options when language changes
   watch(() => currentLanguage.value, () => {
     updateExpirationOptions();
-  }, { immediate: true });
+  });
 });
 
 function formatExpirationTitle(value) {
+  // Mapping des valeurs vers les clés de traduction
+  const translationKeys = {
+    '1h': '1hour',
+    '3h': '3hours',
+    '6h': '6hours',
+    '12h': '12hours',
+    '24h': '24hours',
+    '72h': '3days',
+    '168h': '1week'
+  };
+  
+  // Si on a une traduction, on l'utilise
+  if (translationKeys[value]) {
+    return getTranslation(translationKeys[value]);
+  }
+  
+  // Sinon, formatage générique (fallback)
   const duration = parseDuration(value);
   if (duration < 3600) {
     return `${duration / 60} Minutes`;

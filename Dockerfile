@@ -63,6 +63,9 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Create the storage directory for the backend
 RUN mkdir -p /app/storage
 
+# Create directory for personal assets (NOUVEAU)
+RUN mkdir -p /app/personal
+
 # Expose the ports for Nginx and the Go server
 EXPOSE 80 8080
 
