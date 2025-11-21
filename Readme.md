@@ -194,7 +194,23 @@ curl http://localhost:8081/api/config
 
 ```yaml
 services:
+  db:
+    image: postgres:17-alpine
+    container_name: gopherdrop_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: gopherdropdb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d gopherdropdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gopherdrop
+
   app:
+    image: kenny31/gopherdrop:latest
     environment:
       # Database configuration
       DB_HOST: db
@@ -212,8 +228,16 @@ services:
       BACKGROUND_URL: "/personal/background.jpg"
       FAVICON_URL: "/personal/favicon.ico"
       CUSTOM_CSS: ""
+      LISTEN_ADDR: :8080
+      STORAGE_PATH: /app/storage
+      EXPIRATION_OPTIONS: "1h,6h,24h,72h"
+
+    depends_on:
+      db:
+        condition: service_healthy
       
     volumes:
+      - ./Storage:/app/storage
       - ./personal:/app/personal:ro  # Mount personal assets
     ports:
       - "8081:80"
