@@ -228,7 +228,6 @@ services:
       BACKGROUND_URL: "/personal/background.jpg"
       FAVICON_URL: "/personal/favicon.ico"
       CUSTOM_CSS: ""
-      LISTEN_ADDR: 8080
       STORAGE_PATH: /app/storage
       EXPIRATION_OPTIONS: "1h,6h,24h,72h"
 
