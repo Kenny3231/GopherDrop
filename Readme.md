@@ -241,6 +241,12 @@ services:
       - ./personal:/app/personal:ro  # Mount personal assets
     ports:
       - "8081:80"
+    networks:
+      - gopherdrop
+
+networks:
+  gopherdrop:
+    driver: bridge
 ```
 
 ### **Commands**
