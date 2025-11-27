@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kek-Sec/gopherdrop/internal/config"
-	"github.com/kek-Sec/gopherdrop/internal/database"
-	"github.com/kek-Sec/gopherdrop/internal/models"
-	"github.com/kek-Sec/gopherdrop/internal/routes"
+	"github.com/Kenny3231/gopherdrop/internal/config"
+	"github.com/Kenny3231/gopherdrop/internal/database"
+	"github.com/Kenny3231/gopherdrop/internal/models"
+	"github.com/Kenny3231/gopherdrop/internal/routes"
 )
 
 var version = "dev"
@@ -33,9 +33,9 @@ func main() {
 	server := &http.Server{
 		Addr:         cfg.ListenAddr,
 		Handler:      r,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  90 * time.Second,
 	}
 
 	// Start the server
